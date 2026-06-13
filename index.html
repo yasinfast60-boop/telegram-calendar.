@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#C17F5A"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="تقویم محتوا"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>تقویم محتوای تلگرام</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+:root {
+  --bg:#F7F5F2; --surface:#fff; --surface2:#F0EDE8;
+  --accent:#C17F5A; --accent-light:#EDD9C8; --accent-dark:#9A6344;
+  --text:#1E1A17; --muted:#7A6E66; --border:#E2DDD8;
+  --tp:#D4E8D4; --te:#D4DFF0; --tt:#F0E8D4; --to:#F5D5D5; --tr:#E8D4F0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px 14px 60px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:1.35rem;font-weight:700;margin-bottom:4px}
+header p{font-size:.78rem;color:var(--muted)}
+.accent-line{width:36px;height:3px;background:var(--accent);margin:8px auto 0;border-radius:2px}
+
+/* panels */
+.panel{background:var(--surface);border-radius:14px;padding:18px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 1px 5px rgba(0,0,0,.04)}
+.panel-label{font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.04em}
+
+/* selectors */
+.selectors{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+.selectors select{flex:1;min-width:80px;padding:9px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:'Vazirmatn',sans-serif;font-size:.85rem;color:var(--text);background:var(--bg);appearance:none;cursor:pointer;transition:border-color .2s}
+.selectors select:focus{outline:none;border-color:var(--accent)}
+.week-preview{font-size:.75rem;color:var(--muted);background:var(--surface2);padding:7px 11px;border-radius:7px;margin-bottom:12px;min-height:28px;line-height:1.6}
+
+/* product rows */
+.col-labels{display:flex;gap:6px;margin-bottom:4px}
+.col-labels span{font-size:.65rem;color:var(--muted);font-weight:700}
+.cl-name{flex:2;padding-right:10px} .cl-price{flex:1;padding-right:10px} .cl-img{flex:2;padding-right:10px} .cl-link{flex:2;padding-right:10px} .cl-del{width:28px}
+.product-row{display:flex;gap:6px;margin-bottom:7px;align-items:flex-start;flex-wrap:wrap}
+.product-row input{padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Vazirmatn',sans-serif;font-size:.82rem;color:var(--text);background:var(--bg);transition:border-color .2s;width:100%}
+.product-row input:focus{outline:none;border-color:var(--accent)}
+.product-row input::placeholder{color:#C0B8B0;font-size:.78rem}
+.f-name{flex:2;min-width:100px} .f-price{flex:1;min-width:70px} .f-img{flex:2;min-width:100px} .f-link{flex:2;min-width:100px}
+.remove-btn{width:28px;height:36px;border:none;background:#F5DADA;color:#8B1A1A;border-radius:8px;font-size:.95rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s;margin-top:0}
+.remove-btn:hover{background:#F0C0C0}
+.add-row-btn{width:100%;padding:8px;background:transparent;border:1.5px dashed var(--accent-light);border-radius:8px;font-family:'Vazirmatn',sans-serif;font-size:.8rem;color:var(--accent);cursor:pointer;margin-top:3px;transition:background .15s}
+.add-row-btn:hover{background:var(--accent-light)}
+.hint{font-size:.68rem;color:var(--muted);margin-top:8px;line-height:1.6}
+
+/* buttons */
+.gen-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'Vazirmatn',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;transition:background .2s,transform .1s}
+.gen-btn:hover{background:var(--accent-dark)} .gen-btn:active{transform:scale(.98)} .gen-btn:disabled{background:#C4B8AE;cursor:not-allowed}
+
+/* loading */
+.loading{text-align:center;padding:36px 14px;display:none}
+.spinner{width:28px;height:28px;border:3px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:.83rem;color:var(--muted)}
+
+/* error */
+.error-box{background:#FFF0F0;border:1px solid #F5C6C6;border-radius:9px;padding:12px;text-align:center;color:#8B1A1A;font-size:.8rem;display:none;margin-bottom:14px}
+
+/* result */
+.result{display:none}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px}
+.result-title{font-size:.88rem;font-weight:700;color:var(--accent-dark)}
+.price-note{background:#FFF8F2;border:1px solid var(--accent-light);border-radius:9px;padding:11px 13px;font-size:.8rem;line-height:1.7;margin-bottom:14px}
+.price-note strong{color:var(--accent-dark)}
+
+/* post cards */
+.post-card{background:var(--surface);border-radius:13px;padding:15px;margin-bottom:11px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.post-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex-wrap:wrap;gap:5px}
+.post-day{font-size:.8rem;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:5px}
+.time-badge{font-size:.7rem;background:var(--surface2);color:var(--muted);padding:2px 7px;border-radius:20px}
+.type-tag{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px}
+.tag-p{background:var(--tp);color:#2D5A2D} .tag-e{background:var(--te);color:#1E3A6A}
+.tag-t{background:var(--tt);color:#6A4A1E} .tag-o{background:var(--to);color:#6A1E1E} .tag-r{background:var(--tr);color:#4A1E6A}
+.post-title{font-size:.91rem;font-weight:600;margin-bottom:7px;line-height:1.5}
+.post-meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.meta-chip{font-size:.68rem;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:20px}
+.p-direct{background:#D4ECD4;color:#1A5E1A} .p-cta{background:#FCE8D4;color:#7A3A00}
+.price-badge{font-size:.68rem;padding:2px 7px;border-radius:20px;font-weight:600}
+.caption-label{font-size:.66rem;color:var(--muted);font-weight:700;margin-bottom:5px;letter-spacing:.04em}
+.caption-box{background:var(--surface2);border-radius:9px;padding:11px 13px;font-size:.82rem;line-height:1.85;border-right:3px solid var(--accent-light);white-space:pre-line}
+
+/* product card in result */
+.product-card{background:#FAFDF8;border:1px solid #C8E0C8;border-radius:13px;padding:15px;margin-top:14px}
+.product-card-title{font-size:.78rem;font-weight:700;color:#2D5A2D;margin-bottom:10px}
+.product-img{width:100%;max-height:200px;object-fit:cover;border-radius:9px;margin-bottom:10px;display:block}
+.product-img-error{background:var(--surface2);border-radius:9px;padding:14px;text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:10px}
+.product-desc{font-size:.8rem;line-height:1.75;color:var(--text);background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border)}
+.desc-loading{font-size:.75rem;color:var(--muted);text-align:center;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+.desc-spinner{width:14px;height:14px;border:2px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.dl-btns{display:flex;gap:8px;flex-wrap:wrap}
+.dl-btn{flex:1;min-width:100px;padding:8px 10px;border:none;border-radius:8px;font-family:'Vazirmatn',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.dl-png{background:#E8F4FF;color:#1A4A8A} .dl-png:hover{background:#D0E8FF}
+.dl-pdf{background:#F4E8FF;color:#4A1A8A} .dl-pdf:hover{background:#E8D0FF}
+.dl-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
+
+/* strategy */
+.strategy-section{margin-top:20px;background:var(--surface);border-radius:13px;padding:16px;border:1px solid var(--border)}
+.strategy-section h3{font-size:.83rem;font-weight:700;color:var(--accent-dark);margin-bottom:10px}
+.strategy-item{padding:9px 0;border-bottom:1px solid var(--border);font-size:.81rem;line-height:1.7}
+.strategy-item:last-child{border-bottom:none}
+.snum{font-weight:700;color:var(--accent);margin-left:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📅 تقویم محتوای تلگرام</h1>
+  <p>کانال آرایشی · مراقبتی · بهداشتی</p>
+  <div class="accent-line"></div>
+</header>
+
+<!-- Week selector -->
+<div class="panel">
+  <div class="panel-label">📆 انتخاب هفته</div>
+  <div class="selectors">
+    <select id="weekNum" onchange="updatePreview()">
+      <option value="1">هفته اول</option>
+      <option value="2">هفته دوم</option>
+      <option value="3">هفته سوم</option>
+      <option value="4">هفته چهارم</option>
+    </select>
+    <select id="monthNum" onchange="updatePreview()">
+      <option value="1">فروردین</option><option value="2">اردیبهشت</option>
+      <option value="3">خرداد</option><option value="4">تیر</option>
+      <option value="5">مرداد</option><option value="6">شهریور</option>
+      <option value="7">مهر</option><option value="8">آبان</option>
+      <option value="9">آذر</option><option value="10">دی</option>
+      <option value="11">بهمن</option><option value="12">اسفند</option>
+    </select>
+    <select id="yearNum" onchange="updatePreview()">
+      <option value="1403">۱۴۰۳</option>
+      <option value="1404" selected>۱۴۰۴</option>
+      <option value="1405">۱۴۰۵</option>
+    </select>
+  </div>
+  <div class="week-preview" id="weekPreview">—</div>
+  <button class="gen-btn" id="generateBtn" onclick="generateWeek()">✨ تولید محتوای این هفته</button>
+</div>
+
+<!-- Products panel -->
+<div class="panel">
+  <div class="panel-label">🛍️ محصولات این هفته</div>
+  <div class="col-labels">
+    <span class="cl-name">نام محصول</span>
+    <span class="cl-price">قیمت</span>
+    <span class="cl-img">لینک عکس</span>
+    <span class="cl-link">لینک صفحه محصول</span>
+    <span class="cl-del"></span>
+  </div>
+  <div id="productRows"></div>
+  <button class="add-row-btn" onclick="addProductRow()">+ افزودن محصول</button>
+  <div class="hint">قیمت و لینک‌ها اختیاری‌اند. لینک صفحه محصول برای استخراج خودکار توضیحات استفاده می‌شه.</div>
+</div>
+
+<div class="error-box" id="errorBox"></div>
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p>در حال طراحی محتوای هفته...</p>
+  <p style="font-size:.72rem;margin-top:5px;color:#bbb">چند لحظه صبر کن</p>
+</div>
+<div class="result" id="result"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ── Persian calendar ──────────────────────────────────────────────────────────
+const PDAYS=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+const PMONTHS=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+
+function monthDays(m,y){if(m<=6)return 31;if(m<=11)return 30;return(y%4===3)?30:29}
+
+function jalaliToGregorian(jy,jm,jd){
+  let jy2=jy-979,jm2=jm-1,jd2=jd-1;
+  let jdn=365*jy2+Math.floor(jy2/4)-Math.floor(jy2/100)+Math.floor(jy2/400);
+  for(let i=0;i<jm2;i++)jdn+=[31,31,31,31,31,31,30,30,30,30,30,29][i];
+  jdn+=jd2;
+  let gdn=jdn+79;
+  let gy=1600+400*Math.floor(gdn/146097);gdn=gdn%146097;
+  let leap=true;
+  if(gdn>=36525){gdn--;gy+=100*Math.floor(gdn/36524);gdn=gdn%36524;if(gdn>=365)gdn++;else leap=false;}
+  gy+=4*Math.floor(gdn/1461);gdn%=1461;
+  if(gdn>=366){leap=false;gdn--;gy+=Math.floor(gdn/365);gdn=gdn%365;}
+  const gdm=[31,(leap?29:28),31,30,31,30,31,31,30,31,30,31];
+  let gm;for(gm=0;gm<12;gm++){if(gdn<gdm[gm])break;gdn-=gdm[gm];}
+  return new Date(gy,gm,gdn+1);
+}
+
+function persianDOW(y,m,d){const g=jalaliToGregorian(y,m,d);return(g.getDay()+1)%7;}
+
+function weekDates(wn,m,y){
+  const total=monthDays(m,y);
+  const s=(wn-1)*7+1, e=Math.min(wn*7,total);
+  if(s>total)return[];
+  const days=[];
+  for(let d=s;d<=e;d++)days.push({day:d,month:m,year:y,dow:PDAYS[persianDOW(y,m,d)]});
+  return days;
+}
+
+function fa(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);}
+
+// ── Products ──────────────────────────────────────────────────────────────────
+let pcnt=0;
+function addProductRow(name='',price='',imgUrl='',pageUrl=''){
+  pcnt++;const id=pcnt;
+  const c=document.getElementById('productRows');
+  const r=document.createElement('div');
+  r.className='product-row';r.id='pr-'+id;
+  r.innerHTML=`
+    <input type="text" class="f-name prod-name" placeholder="نام محصول" value="${name}"/>
+    <input type="text" class="f-price prod-price" placeholder="قیمت" value="${price}"/>
+    <input type="url" class="f-img prod-img" placeholder="https://... لینک عکس" value="${imgUrl}"/>
+    <input type="url" class="f-link prod-link" placeholder="https://... لینک صفحه" value="${pageUrl}"/>
+    <button class="remove-btn" onclick="document.getElementById('pr-${id}').remove()">×</button>`;
+  c.appendChild(r);
+}
+
+function getProducts(){
+  const rows=document.querySelectorAll('.product-row');
+  const out=[];
+  rows.forEach(r=>{
+    const name=r.querySelector('.prod-name').value.trim();
+    if(!name)return;
+    out.push({
+      name,
+      price:r.querySelector('.prod-price').value.trim(),
+      imgUrl:r.querySelector('.prod-img').value.trim(),
+      pageUrl:r.querySelector('.prod-link').value.trim()
+    });
+  });
+  return out;
+}
+
+// ── Claude API ────────────────────────────────────────────────────────────────
+async function callClaude(prompt, maxTokens=3000){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
+  });
+  const d=await res.json();
+  return d.content.map(i=>i.text||'').join('');
+}
+
+async function fetchProductDesc(pageUrl, productName){
+  if(!pageUrl)return null;
+  const prompt=`لطفاً به URL زیر برو و توضیحات محصول را استخراج کن:
+URL: ${pageUrl}
+نام محصول: ${productName}
+
+اگر نمی‌توانی به URL دسترسی داشته باشی، یک توضیحات حرفه‌ای کوتاه (۳-۴ جمله) برای این نوع محصول آرایشی/مراقبتی بنویس.
+فقط متن توضیحات را برگردان، بدون هیچ مقدمه‌ای.`;
+  return await callClaude(prompt, 500);
+}
+
+// ── Calendar prompt ───────────────────────────────────────────────────────────
+function buildPrompt(wn,m,y,days,products){
+  const mn=PMONTHS[m-1];
+  const wl=['اول','دوم','سوم','چهارم'][wn-1];
+  const dl=days.map(d=>`${d.dow} ${fa(d.day)} ${mn} ${fa(y)}`).join('، ');
+  let ps='';
+  if(products&&products.length){
+    const lines=products.map(p=>p.price?`- ${p.name} — قیمت: ${p.price} تومان`:`- ${p.name}`).join('\n');
+    ps=`\nمحصولات این هفته (از همین‌ها استفاده کن):\n${lines}\n`;
+  }
+  return `تو یک استراتژیست حرفه‌ای محتوا برای کانال تلگرام فروش محصولات آرایشی، مراقبتی و بهداشتی هستی.
+
+مشخصات: ۷۰ عضو، ۳-۴ پست در هفته، هدف: افزایش فروش سپس جذب عضو
+ارسال: پستی/پیک ۲-۵ روز کاری | تحویل حضوری همان روز یا فردا
+${ps}
+هفته: هفته ${wl} ${mn} ${fa(y)} | روزها: ${dl}
+
+وظیفه: دقیقاً ۳ یا ۴ پست طراحی کن.
+قوانین: بدون کلیشه («بهترین»، «فوق‌العاده»)، لحن صمیمی نه بازاری، حداقل یک پست آموزشی، پنجشنبه/جمعه برای محصول/پیشنهاد، CTA غیرتهاجمی، اگر قیمت مشخص است ذکر کن.
+استراتژی قیمت: برای هر پست تعیین کن قیمت مستقیم بهتر است یا CTA.
+
+فقط JSON برگردان، بدون هیچ متن اضافه:
+{"week_label":"هفته ${wl} ${mn} ${fa(y)}","price_strategy_note":"...","posts":[{"date":"...","time":"...","type":"...","title":"...","goal":"...","price_approach":"مستقیم یا CTA","caption":"..."}],"week_tip":"..."}`;
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function updatePreview(){
+  const w=+document.getElementById('weekNum').value;
+  const m=+document.getElementById('monthNum').value;
+  const y=+document.getElementById('yearNum').value;
+  const days=weekDates(w,m,y);
+  if(!days.length){document.getElementById('weekPreview').textContent='این هفته روزی ندارد.';return;}
+  const f=days[0],l=days[days.length-1];
+  document.getElementById('weekPreview').innerHTML=
+    `<strong>${f.dow} ${fa(f.day)}</strong> تا <strong>${l.dow} ${fa(l.day)} ${PMONTHS[m-1]} ${fa(y)}</strong> &nbsp;·&nbsp; ${fa(days.length)} روز`;
+}
+
+function tagClass(t){
+  if(!t)return'';
+  if(t.includes('معرفی'))return'tag-p';
+  if(t.includes('آموزش')||t.includes('ترفند'))return'tag-e';
+  if(t.includes('اعتماد')||t.includes('پشت'))return'tag-t';
+  if(t.includes('تخفیف')||t.includes('پیشنهاد'))return'tag-o';
+  if(t.includes('نظر')||t.includes('تجربه'))return'tag-r';
+  return'';
+}
+
+// ── Product card builder ──────────────────────────────────────────────────────
+function buildProductCardHTML(prod, desc, caption){
+  return `
+  <div style="font-family:'Vazirmatn',Tahoma,sans-serif;direction:rtl;background:#fff;border-radius:16px;padding:20px;max-width:480px;border:1px solid #C8E0C8">
+    <div style="font-size:13px;font-weight:700;color:#2D5A2D;margin-bottom:12px">🛍️ ${prod.name}${prod.price?' — '+prod.price+' تومان':''}</div>
+    ${prod.imgUrl?`<img src="${prod.imgUrl}" crossorigin="anonymous" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px" onerror="this.style.display='none'"/>`:''}
+    <div style="font-size:12px;line-height:1.8;color:#333;background:#F0EDE8;border-radius:8px;padding:10px 12px;margin-bottom:12px;border-right:3px solid #EDD9C8">${desc||'توضیحات در دسترس نیست.'}</div>
+    <div style="font-size:11px;font-weight:700;color:#7A6E66;margin-bottom:6px">📝 کپشن آماده:</div>
+    <div style="font-size:12px;line-height:1.8;color:#1E1A17;background:#FFF8F2;border-radius:8px;padding:10px 12px;border:1px solid #EDD9C8;white-space:pre-line">${caption}</div>
+    <div style="margin-top:10px;font-size:10px;color:#BEB5AD;text-align:center">کانال آرایشی و مراقبتی</div>
+  </div>`;
+}
+
+async function downloadPNG(prod, desc, caption, btn){
+  btn.disabled=true;btn.textContent='⏳';
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:fixed;left:-9999px;top:0;width:500px';
+  wrapper.innerHTML=buildProductCardHTML(prod,desc,caption);
+  document.body.appendChild(wrapper);
+  // wait for image to load
+  const img=wrapper.querySelector('img');
+  if(img)await new Promise(r=>{img.onload=r;img.onerror=r;setTimeout(r,3000);});
+  try{
+    const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,backgroundColor:'#fff'});
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png');
+    a.download=`${prod.name.replace(/\s+/g,'-')}.png`;
+    a.click();
+  }catch(e){alert('خطا در تولید PNG');}
+  document.body.removeChild(wrapper);
+  btn.disabled=false;btn.innerHTML='🖼️ PNG';
+}
+
+async function downloadPDF(prod, desc, caption, btn){
+  btn.disabled=true;btn.textContent='⏳';
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:fixed;left:-9999px;top:0;width:500px';
+  wrapper.innerHTML=buildProductCardHTML(prod,desc,caption);
+  document.body.appendChild(wrapper);
+  const img=wrapper.querySelector('img');
+  if(img)await new Promise(r=>{img.onload=r;img.onerror=r;setTimeout(r,3000);});
+  try{
+    const canvas=await html2canvas(wrapper,{scale:2,useCORS:true,backgroundColor:'#fff'});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[520,canvas.height/2+40]});
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',10,10,500,canvas.height/2);
+    pdf.save(`${prod.name.replace(/\s+/g,'-')}.pdf`);
+  }catch(e){alert('خطا در تولید PDF');}
+  document.body.removeChild(wrapper);
+  btn.disabled=false;btn.innerHTML='📄 PDF';
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderResult(data, products){
+  const el=document.getElementById('result');
+  el.innerHTML='';
+
+  const hdr=document.createElement('div');
+  hdr.className='result-header';
+  hdr.innerHTML=`<span class="result-title">📅 ${data.week_label}</span><span style="font-size:.72rem;color:var(--muted)">${data.posts.length} پست</span>`;
+  el.appendChild(hdr);
+
+  if(data.price_strategy_note){
+    const n=document.createElement('div');
+    n.className='price-note';
+    n.innerHTML=`<strong>💡 استراتژی قیمت:</strong> ${data.price_strategy_note}`;
+    el.appendChild(n);
+  }
+
+  // Map products by name for quick lookup
+  const prodMap={};
+  products.forEach(p=>prodMap[p.name.toLowerCase()]=p);
+
+  data.posts.forEach((post,idx)=>{
+    const card=document.createElement('div');
+    card.className='post-card';
+    const isDirect=post.price_approach&&post.price_approach.includes('مستقیم');
+    card.innerHTML=`
+      <div class="post-header">
+        <div class="post-day">${post.date||''}<span class="time-badge">${post.time||''}</span></div>
+        <span class="type-tag ${tagClass(post.type)}">${post.type||''}</span>
+      </div>
+      <div class="post-title">${post.title||''}</div>
+      <div class="post-meta">
+        <span class="meta-chip">🎯 ${post.goal||''}</span>
+        <span class="price-badge ${isDirect?'p-direct':'p-cta'}">${isDirect?'💰 قیمت مستقیم':'💬 پرسش قیمت'}</span>
+      </div>
+      <div class="caption-label">📝 کپشن آماده:</div>
+      <div class="caption-box">${post.caption||''}</div>`;
+
+    // find matching product
+    let matchedProd=null;
+    if(products.length>0){
+      // try to find product mentioned in title/caption
+      matchedProd=products.find(p=>
+        (post.title&&post.title.includes(p.name))||
+        (post.caption&&post.caption.includes(p.name))
+      )||products[idx%products.length];
+    }
+
+    if(matchedProd&&(matchedProd.imgUrl||matchedProd.pageUrl||true)){
+      const pc=document.createElement('div');
+      pc.className='product-card';
+      pc.innerHTML=`<div class="product-card-title">📦 فایل محصول: ${matchedProd.name}</div>
+        ${matchedProd.imgUrl?`<img class="product-img" src="${matchedProd.imgUrl}" crossorigin="anonymous" onerror="this.outerHTML='<div class=\\'product-img-error\\'>❌ عکس بارگذاری نشد</div>'" />`:''}
+        <div class="product-desc" id="desc-${idx}">
+          <div class="desc-loading"><div class="desc-spinner"></div> در حال دریافت توضیحات...</div>
+        </div>
+        <div class="dl-btns">
+          <button class="dl-btn dl-png" id="png-btn-${idx}" disabled>🖼️ PNG</button>
+          <button class="dl-btn dl-pdf" id="pdf-btn-${idx}" disabled>📄 PDF</button>
+        </div>`;
+      card.appendChild(pc);
+
+      // async fetch description then enable download buttons
+      (async()=>{
+        const descEl=document.getElementById(`desc-${idx}`);
+        const pngBtn=document.getElementById(`png-btn-${idx}`);
+        const pdfBtn=document.getElementById(`pdf-btn-${idx}`);
+        let desc='';
+        try{
+          if(matchedProd.pageUrl){
+            desc=await fetchProductDesc(matchedProd.pageUrl,matchedProd.name);
+          } else {
+            desc=await callClaude(`یک توضیحات حرفه‌ای ۳-۴ جمله‌ای برای محصول "${matchedProd.name}" در حوزه آرایشی/مراقبتی بنویس. فقط متن توضیحات، بدون مقدمه.`,300);
+          }
+          descEl.textContent=desc||'توضیحات در دسترس نیست.';
+        }catch(e){
+          desc='توضیحات در دسترس نیست.';
+          descEl.textContent=desc;
+        }
+        pngBtn.disabled=false;
+        pdfBtn.disabled=false;
+        pngBtn.onclick=()=>downloadPNG(matchedProd,desc,post.caption||'',pngBtn);
+        pdfBtn.onclick=()=>downloadPDF(matchedProd,desc,post.caption||'',pdfBtn);
+      })();
+    }
+
+    el.appendChild(card);
+  });
+
+  if(data.week_tip){
+    const s=document.createElement('div');
+    s.className='strategy-section';
+    s.innerHTML=`<h3>💡 نکته اجرایی این هفته</h3><div class="strategy-item">${data.week_tip}</div>`;
+    el.appendChild(s);
+  }
+
+  el.style.display='block';
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+async function generateWeek(){
+  const w=+document.getElementById('weekNum').value;
+  const m=+document.getElementById('monthNum').value;
+  const y=+document.getElementById('yearNum').value;
+  const days=weekDates(w,m,y);
+  if(!days.length){
+    document.getElementById('errorBox').textContent='این هفته در ماه انتخابی روزی ندارد.';
+    document.getElementById('errorBox').style.display='block';return;
+  }
+  const btn=document.getElementById('generateBtn');
+  const loading=document.getElementById('loading');
+  const errorBox=document.getElementById('errorBox');
+  const result=document.getElementById('result');
+  btn.disabled=true;loading.style.display='block';errorBox.style.display='none';result.style.display='none';
+
+  const products=getProducts();
+  const prompt=buildPrompt(w,m,y,days,products);
+  try{
+    let raw=await callClaude(prompt,3000);
+    raw=raw.replace(/```json|```/g,'').trim();
+    let parsed;
+    try{parsed=JSON.parse(raw);}
+    catch{const mx=raw.match(/\{[\s\S]*\}/);if(mx)parsed=JSON.parse(mx[0]);else throw new Error('JSON نامعتبر');}
+    renderResult(parsed,products);
+  }catch(e){
+    errorBox.textContent='مشکلی پیش آمد. دوباره تلاش کن.';
+    errorBox.style.display='block';console.error(e);
+  }finally{
+    loading.style.display='none';btn.disabled=false;btn.textContent='🔄 تولید مجدد';
+  }
+}
+
+// init
+updatePreview();
+addProductRow();
+</script>
+
+<div id="installBanner" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#C17F5A;color:#fff;padding:12px 20px;border-radius:12px;font-family:Vazirmatn,sans-serif;font-size:.82rem;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:999;text-align:center;max-width:300px;width:90%">
+  📲 برای نصب روی دسکتاپ گوشی، دکمه زیر را بزن
+  <br/><button onclick="installApp()" style="margin-top:8px;background:#fff;color:#C17F5A;border:none;border-radius:8px;padding:6px 16px;font-family:Vazirmatn,sans-serif;font-weight:700;font-size:.82rem;cursor:pointer">نصب اپ</button>
+  <button onclick="document.getElementById('installBanner').style.display='none'" style="margin-top:8px;margin-right:6px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:Vazirmatn,sans-serif;font-size:.78rem;cursor:pointer">بعداً</button>
+</div>
+<script>
+// Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(r=>console.log('SW registered')).catch(e=>console.log('SW error',e));
+  });
+}
+// Install prompt
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBanner').style.display='block';
+});
+function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r=>{
+    deferredPrompt=null;
+    document.getElementById('installBanner').style.display='none';
+  });
+}
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBanner').style.display='none';
+});
+</script>
+</body>
+</html>
